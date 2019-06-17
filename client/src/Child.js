@@ -5,9 +5,10 @@ const Child = () => {
   const [state, setstate] = useState([])
 
   conn.onmessage = function (evt) {
-    var messages = evt.data.split('\n');
-    const msg = messages.pop()
-    const update = [...state, msg]
+    var { message } = JSON.parse(evt.data);
+    console.log('messagees: ',message)
+    // const msg = messages.pop()
+    const update = [...state, message]
     setstate(update)
   };
   
