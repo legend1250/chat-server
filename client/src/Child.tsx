@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { inject, observer } from 'mobx-react'
+import WorldChannel from './WorldChannel'
 
 interface Props {
   stores?: any
@@ -19,9 +20,10 @@ const Child: React.FC<Props> = (props: Props) => {
 
   return (
     <div>
-      {state.map((str, index) => (
+      {/* {state.map((str, index) => (
         <li key={`li-${index}`}>{str}</li>
-      ))}
+      ))} */}
+      <WorldChannel />
     </div>
   )
 }
