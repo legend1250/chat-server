@@ -50,6 +50,8 @@ type Client struct {
 	// Buffered channel of outbound messages.
 	send chan Message
 
+	room string
+
 	// 
 	joinRoom chan string
 
@@ -81,9 +83,13 @@ func (c *Client) readPump() {
 		}
 		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		// log.Println(message)
+
+		// join room
 		if message.Type == 1 {
 			c.hub.registerRoom <-c
-		} else {
+		} else if message.Type == 2 {
+			c.hub.leaverRoom <-c
+		}else {
 			c.hub.broadcast <- message
 		}
 	}
@@ -142,7 +148,7 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			message := Message{RoomID: roomID, Message: "joined room"}
+			message := Message{Type: 2,RoomID: roomID, Message: "joined room"}
 			err := c.conn.WriteJSON(message)
 			if err != nil {
 				return

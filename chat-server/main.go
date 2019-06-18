@@ -29,6 +29,9 @@ func main() {
 	flag.Parse()
 	hub := newHub()
 	go hub.run()
+	// 
+	hub.loggingRooms()
+
 	http.HandleFunc("/", serveHome)
 	// fs := http.FileServer(http.Dir("./public"))
 	// http.Handle("/", fs)
