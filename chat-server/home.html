@@ -23,13 +23,14 @@ window.onload = function () {
         if (!msg.value) {
             return false;
         }
-        conn.send(JSON.stringify({message: msg.value}));
+        conn.send(JSON.stringify({type: 2, message: msg.value}));
         msg.value = "";
         return false;
     };
 
     if (window["WebSocket"]) {
         conn = new WebSocket("ws://" + document.location.host + "/ws");
+        window.conn = conn
         conn.onclose = function (evt) {
             var item = document.createElement("div");
             item.innerHTML = "<b>Connection closed.</b>";
@@ -68,7 +69,7 @@ body {
     background: white;
     margin: 0;
     padding: 0.5em 0.5em 0.5em 0.5em;
-    position: absolute;
+    /* position: absolute; */
     top: 0.5em;
     left: 0.5em;
     right: 0.5em;
@@ -89,10 +90,24 @@ body {
 </style>
 </head>
 <body>
-<div id="log"></div>
-<form id="form">
+<div>
+  <div style="display: flex;" >
+    <div id="log" style="flex: 5"></div>
+    <div style="flex: 1" >
+      <div><button onclick="joinRoom()">Join room</button></div>
+      <script>
+        function joinRoom(){
+          const { conn } = window
+          conn.send(JSON.stringify({type: 1, message: "ab"}));
+        }
+      </script>
+      <div><button>Escape room</button></div>
+    </div>
+  </div>
+  <form id="form">
     <input type="submit" value="Send" />
     <input type="text" id="msg" size="64"/>
-</form>
+  </form>
+</div>
 </body>
 </html>

@@ -18,6 +18,12 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	unregister chan *Client
+
+	// Room create from clients
+	rooms map[string]*Room
+
+	// Client register room
+	registerRoom chan *Client
 }
 
 func newHub() *Hub {
@@ -26,6 +32,9 @@ func newHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		// rooms of namepsace
+		rooms: 					make(map[string]*Room),
+		registerRoom: 	make(chan *Client),
 	}
 }
 
@@ -48,6 +57,21 @@ func (h *Hub) run() {
 					delete(h.clients, client)
 				}
 			}
+		case client := <- h.registerRoom:
+			roomID := "room01"
+			
+			if room, found := h.rooms[roomID]; found {
+				room.player2 = client
+
+				client.joinRoom <- roomID
+			} else {
+				newRoom := Room{roomID: roomID, player1: client}
+				h.rooms[roomID] = &newRoom
+
+				client.joinRoom <- roomID
+			}
+
 		}
+
 	}
 }
