@@ -1,18 +1,44 @@
 import { observable, action } from 'mobx'
+import { JoinRoom } from '../views/home/components'
+
+export interface roomTypes {
+  roomId: string
+}
 
 class RootStore {
   constructor() {
-    this.initWebsocket()
+    const ws = new WebSocket('ws://localhost:8080/ws')
+    ws.onmessage = this.onListenMessage.bind(this)
+    this.conn = ws
+    this.loadingWS = false
   }
 
   @observable loadingWS: boolean = true
-  conn: any
+  @observable messages: Array<any> = []
+  @observable roomInfo?: roomTypes = undefined
+  conn: WebSocket
 
-  @action initWebsocket() {
-    if ((window as any)['WebSocket']) {
-      this.conn = new WebSocket('ws://localhost:8080/ws')
+  onListenMessage(evt: any) {
+    try {
+      const obj = JSON.parse(evt.data)
+      const { type } = obj
+      switch (type) {
+        // join room success
+        case 2: {
+          this.joinRoom(obj)
+        }
+        default: {
+          this.messages.push(obj)
+        }
+      }
+    } catch (error) {
+      console.log('failed while listening message: ', error)
     }
-    this.loadingWS = false
+  }
+
+  @action joinRoom(data: any) {
+    const { roomId } = data
+    this.roomInfo = { roomId }
   }
 }
 
