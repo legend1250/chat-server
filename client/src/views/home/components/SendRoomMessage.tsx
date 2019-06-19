@@ -23,7 +23,7 @@ class SendWorldMessage extends Component<Props & FormComponentProps> {
       props: { form }
     } = this
     const { message } = form.getFieldsValue()
-    conn.send(JSON.stringify({ type: 0, message }))
+    conn.send(JSON.stringify({ type: 5, message }))
     form.setFieldsValue({ message: '' })
   }
 

@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { inject, observer } from 'mobx-react'
 import { Button } from 'antd'
 import { StoresTypes } from '../../../stores'
+import SendRoomMessage from './SendRoomMessage'
 
 class JoinRoom extends Component<{ stores?: any }> {
   get stores(): StoresTypes {
@@ -15,7 +16,7 @@ class JoinRoom extends Component<{ stores?: any }> {
       conn.send(JSON.stringify({ type: 1 }))
     } else {
       // leave room
-      conn.send(JSON.stringify({ type: 2 }))
+      conn.send(JSON.stringify({ type: 3 }))
     }
   }
 
@@ -29,6 +30,7 @@ class JoinRoom extends Component<{ stores?: any }> {
       <div>
         <Button onClick={onClickJoin}>{!roomInfo ? 'Join room' : 'Leave room'}</Button>
         {roomInfo && <span style={{ paddingLeft: 14 }}>roomId: {roomInfo.roomId}</span>}
+        <SendRoomMessage />
       </div>
     )
   }

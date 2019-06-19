@@ -26,9 +26,22 @@ class RootStore {
         // join room success
         case 2: {
           this.joinRoom(obj)
+          break
+        }
+        // leave room success
+        case 4: {
+          this.leaveRoom(obj)
+          break
+        }
+        // receive message from individual room
+        case 6: {
+          // this.leaveRoom(obj)
+          console.log('message from room: ', obj)
+          break
         }
         default: {
           this.messages.push(obj)
+          break
         }
       }
     } catch (error) {
@@ -36,9 +49,19 @@ class RootStore {
     }
   }
 
+  @action pushMessage(msg: any) {
+    this.messages.push(msg)
+  }
+
   @action joinRoom(data: any) {
     const { roomId } = data
     this.roomInfo = { roomId }
+    this.pushMessage(data)
+  }
+
+  @action leaveRoom(data: any) {
+    this.roomInfo = undefined
+    this.pushMessage(data)
   }
 }
 
