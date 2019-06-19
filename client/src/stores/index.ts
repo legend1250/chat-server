@@ -6,4 +6,5 @@ export interface StoresTypes {
   messages: Array<any>
   conn: WebSocket
   roomInfo: roomTypes
+  roomMessages: Array<any>
 }

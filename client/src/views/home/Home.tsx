@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Row, Form, Col } from 'antd'
+import { Row, Form, Col, Card } from 'antd'
 import styles from './Home.module.scss'
 import { inject, observer } from 'mobx-react'
 import { SendWorldMessage, JoinRoom } from './components'
@@ -15,7 +15,6 @@ const Home = () => {
           </Col>
           <Col span={20}>
             <WorldMessages />
-            <SendWorldMessage />
           </Col>
         </Row>
       </Col>
@@ -29,7 +28,11 @@ const Home = () => {
 export default Home
 
 const OnlineUsers = () => {
-  return <div>OnlineUsers</div>
+  return (
+    <div>
+      <Card title='OnlineUsers'>none</Card>
+    </div>
+  )
 }
 
 const WorldMessages = inject('stores')(
@@ -38,10 +41,14 @@ const WorldMessages = inject('stores')(
 
     return (
       <div className={styles['left-side']}>
-        Messages:
-        {toJS(messages).map((m: any, index: number) => (
-          <li key={`mess-${index}`}>{m.message}</li>
-        ))}
+        <Card title='Messages'>
+          <div className={styles['chat-body']}>
+            {toJS(messages).map((m: any, index: number) => (
+              <li key={`mess-${index}`}>{m.message}</li>
+            ))}
+          </div>
+          <SendWorldMessage />
+        </Card>
       </div>
     )
   })

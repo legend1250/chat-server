@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
-import { Form, Input, Row } from 'antd'
+import { Form, Input, Row, message as AntMessage } from 'antd'
 import { inject, observer } from 'mobx-react'
 import { FormComponentProps } from 'antd/lib/form'
 import { StoresTypes } from '../../../stores'
-import { FORM_ITEM_LAYOUT } from './common'
+import { FORM_ITEM_LAYOUT_SMALL } from './common'
 
 const FormItem = Form.Item
 
@@ -19,9 +19,12 @@ class SendWorldMessage extends Component<Props & FormComponentProps> {
   onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const {
-      stores: { conn },
+      stores: { conn, roomInfo },
       props: { form }
     } = this
+    if (!roomInfo) {
+      AntMessage.error(`You haven't joined a room`)
+    }
     const { message } = form.getFieldsValue()
     conn.send(JSON.stringify({ type: 5, message }))
     form.setFieldsValue({ message: '' })
@@ -33,7 +36,7 @@ class SendWorldMessage extends Component<Props & FormComponentProps> {
     return (
       <Row>
         <Form onSubmit={this.onSubmit}>
-          <FormItem label='message' {...FORM_ITEM_LAYOUT}>
+          <FormItem label='message' {...FORM_ITEM_LAYOUT_SMALL}>
             {form.getFieldDecorator('message', {})(<Input />)}
           </FormItem>
         </Form>

@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
 import { inject, observer } from 'mobx-react'
-import { Button } from 'antd'
+import { Button, Card } from 'antd'
 import { StoresTypes } from '../../../stores'
 import SendRoomMessage from './SendRoomMessage'
+import styles from './JoinRoom.module.scss'
+import { toJS } from 'mobx'
 
 class JoinRoom extends Component<{ stores?: any }> {
   get stores(): StoresTypes {
@@ -23,14 +25,25 @@ class JoinRoom extends Component<{ stores?: any }> {
   render() {
     const {
       onClickJoin,
-      stores: { roomInfo }
+      stores: { roomInfo, roomMessages }
     } = this
 
     return (
       <div>
-        <Button onClick={onClickJoin}>{!roomInfo ? 'Join room' : 'Leave room'}</Button>
-        {roomInfo && <span style={{ paddingLeft: 14 }}>roomId: {roomInfo.roomId}</span>}
-        <SendRoomMessage />
+        <Card title='Private Room'>
+          <div>
+            <Button onClick={onClickJoin} type='primary'>
+              {!roomInfo ? 'Join room' : 'Leave room'}
+            </Button>
+            {roomInfo && <span style={{ paddingLeft: 14 }}>roomId: {roomInfo.roomId}</span>}
+          </div>
+          <div className={styles['chat-body']}>
+            {toJS(roomMessages).map((m: any, index: number) => (
+              <li key={`mess-${index}`}>{m.message}</li>
+            ))}
+          </div>
+          <SendRoomMessage />
+        </Card>
       </div>
     )
   }

@@ -15,6 +15,7 @@ class RootStore {
 
   @observable loadingWS: boolean = true
   @observable messages: Array<any> = []
+  @observable roomMessages: Array<any> = []
   @observable roomInfo?: roomTypes = undefined
   conn: WebSocket
 
@@ -37,6 +38,7 @@ class RootStore {
         case 6: {
           // this.leaveRoom(obj)
           console.log('message from room: ', obj)
+          this.roomMessages.push(obj)
           break
         }
         default: {
