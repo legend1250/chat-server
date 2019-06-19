@@ -1,8 +1,8 @@
-import React, { Component } from 'react'
-import { Row, Form, Col, Card } from 'antd'
+import React from 'react'
+import { Row, Col, Card } from 'antd'
 import styles from './Home.module.scss'
 import { inject, observer } from 'mobx-react'
-import { SendWorldMessage, JoinRoom } from './components'
+import { SendWorldMessage, PrivateRoom } from './components'
 import { toJS } from 'mobx'
 
 const Home = () => {
@@ -19,7 +19,7 @@ const Home = () => {
         </Row>
       </Col>
       <Col span={8}>
-        <JoinRoom />
+        <PrivateRoom />
       </Col>
     </Row>
   )

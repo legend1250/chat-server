@@ -1,5 +1,5 @@
 const { addDecoratorsLegacy, addLessLoader } = require('customize-cra')
-// const path = require('path')
+const path = require('path')
 
 function webpack(config, env) {
   config = addDecoratorsLegacy()(config)
@@ -15,7 +15,7 @@ function webpack(config, env) {
   })
   config.resolve = {
     alias: {
-      // '@components': path.resolve(__dirname, './src/components'),
+      '@components': path.resolve(__dirname, './src/components')
     },
     extensions: ['.js', 'jsx', '.json', '.ts', '.tsx']
   }

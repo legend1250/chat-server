@@ -1,4 +1,4 @@
 import SendWorldMessage from './SendWorldMessage'
-import JoinRoom from './JoinRoom'
+import PrivateRoom from './PrivateRoom'
 
-export { SendWorldMessage, JoinRoom }
+export { SendWorldMessage, PrivateRoom }

@@ -1,5 +1,4 @@
 import { observable, action } from 'mobx'
-import { JoinRoom } from '../views/home/components'
 
 export interface roomTypes {
   roomId: string
