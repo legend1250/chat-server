@@ -56,22 +56,20 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
-			log.Printf("register client %p\n", client)
+			// log.Printf("register client %p\n", client)
 			h.clients[client] = true
 		case client := <-h.unregister:
-			log.Printf("unregister client %p\n", client)
+			// log.Printf("unregister client %p\n", client)
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
-			// if _, ok := h.rooms[client.room]; ok {
-				// h.leaveRoom <-client
-				// log.Println("unregister", client)
-			// }
+			// this was block, how to fix???
+			// h.leaveRoom <-client
+
 			if room, ok := h.rooms[client.room]; ok {
 				room.playerLeave <- client
 				client.leaveRoom <- room.roomID
-				// log.Println("unregister", client)
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -106,7 +104,7 @@ func (h *Hub) run() {
 						player1: client,
 						player2: nil,
 						broadcast: make(chan Message), 
-						playerLeave: make(chan *Client), 
+						playerLeave: make(chan *Client, 2), 
 						close: make(chan bool),
 					}
 						go newRoom.run()
@@ -128,7 +126,9 @@ func (h *Hub) run() {
 			roomID := clientMessage.Client.room
 			message := clientMessage.Message
 			if room, found := h.rooms[roomID]; found {
-				room.broadcast <- message
+				if room.player1 == clientMessage.Client || room.player2 == clientMessage.Client {
+					room.broadcast <- message
+				}
 			}
 		}
 
