@@ -32,7 +32,10 @@ type Hub struct {
 	registerRoom chan *Client
 
 	// Client leave room
-	leaverRoom chan *Client
+	leaveRoom chan *Client
+
+	// boardcast room
+	broadcastRoom chan *ClientRoomMessage
 }
 
 func newHub() *Hub {
@@ -44,7 +47,8 @@ func newHub() *Hub {
 		// rooms of namepsace
 		rooms: 					make(map[string]*Room),
 		registerRoom: 	make(chan *Client),
-		leaverRoom: 		make(chan *Client),
+		leaveRoom: 			make(chan *Client),
+		broadcastRoom:	make(chan *ClientRoomMessage),
 	}
 }
 
@@ -57,6 +61,10 @@ func (h *Hub) run() {
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+			}
+			if _, ok := h.rooms[client.room]; ok {
+				log.Println("unregister", client)
+				h.leaveRoom <-client
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -71,40 +79,53 @@ func (h *Hub) run() {
 			// TODO: temporary hardcode
 			roomID := "hardcode_room01"
 			// roomID := xid.New().String()
-			
+
 			// if room was found
 			// TODO: many cases for handling
-			if room, found := h.rooms[roomID]; found {
-				room.player2 = client
-
-				client.joinRoom <- roomID
+			room, found := h.rooms[roomID] 
+				if found {
+					if room.player2 == nil {
+						room.player2 = client
+					} else if room.player1 == nil {
+						room.player1 = client
+					}
+					// set room client
+					client.joinRoom <- roomID
 				} else {
 					// add player 1 first
-				newRoom := Room{roomID: roomID, player1: client}
-				// set client room
-				client.room = roomID
-				// create new room of hub
-				h.rooms[roomID] = &newRoom
-				// pass message to client
-				client.joinRoom <- roomID
-			}
-		case client := <- h.leaverRoom:
+					newRoom := Room{
+						hub: h, 
+						roomID: roomID, 
+						player1: client,
+						player2: nil,
+						broadcast: make(chan Message), 
+						playerLeave: make(chan *Client), 
+						close: make(chan bool),
+					}
+						go newRoom.run()
+						// create new room of hub
+						h.rooms[roomID] = &newRoom
+						// pass message to client
+						// set room client
+						client.joinRoom <- roomID
+				}
+			
+		case client := <- h.leaveRoom:
 			joinedRoom := client.room
+			log.Println("leave room: ",client)
 
 			if room, found := h.rooms[joinedRoom]; found {
-				if room.player1 == client {
-					room.player1 = nil
-				} else if room.player2 == client {
-					room.player2 = nil
-				}
-				// if both players are nil => delete room
-				if room.player1 == nil && room.player2 == nil {
-					log.Println("delete room: ", joinedRoom)
-					delete(h.rooms, joinedRoom)
-				}
+				room.playerLeave <- client 
+				client.leaveRoom <- joinedRoom
+			}
+
+		case clientMessage := <- h.broadcastRoom:
+			roomID := clientMessage.Client.room
+			message := clientMessage.Message
+			if room, found := h.rooms[roomID]; found {
+				room.broadcast <- message
 			}
 		}
-
 
 	}
 }

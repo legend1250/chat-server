@@ -54,7 +54,7 @@ type Client struct {
 
 	// 
 	joinRoom chan string
-
+	leaveRoom chan string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -87,9 +87,13 @@ func (c *Client) readPump() {
 		// join room
 		if message.Type == 1 {
 			c.hub.registerRoom <-c
-		} else if message.Type == 2 {
-			c.hub.leaverRoom <-c
-		}else {
+		} else if message.Type == 3 {
+			c.hub.leaveRoom <-c
+		} else if message.Type == 5 {
+			msg := Message{Type: 6, Message: message.Message}
+			clientMessage := &ClientRoomMessage{Client: c, Message: msg}
+			c.hub.broadcastRoom <- clientMessage
+		} else {
 			c.hub.broadcast <- message
 		}
 	}
@@ -148,10 +152,20 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			message := Message{Type: 2,RoomID: roomID, Message: "joined room"}
+			c.room = roomID
+			message := Message{Type: 2,RoomID: roomID, Message: "joined room successfully"}
 			err := c.conn.WriteJSON(message)
 			if err != nil {
 				return
+			}
+		
+		case roomLeaved := <-c.leaveRoom:
+			if roomLeaved != "" {
+				message := Message{Type: 4,RoomID: roomLeaved, Message: "leave room successfully"}
+				err := c.conn.WriteJSON(message)
+				if err != nil {
+					return
+				}
 			}
 
 		case <-ticker.C:
@@ -170,7 +184,13 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan Message), joinRoom: make(chan string)}
+	client := &Client{
+		hub: hub, 
+		conn: conn, 
+		send: make(chan Message), 
+		joinRoom: make(chan string), 
+		leaveRoom: make(chan string),
+	}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
