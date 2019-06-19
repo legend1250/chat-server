@@ -56,15 +56,22 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
+			log.Printf("register client %p\n", client)
 			h.clients[client] = true
 		case client := <-h.unregister:
+			log.Printf("unregister client %p\n", client)
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
-			if _, ok := h.rooms[client.room]; ok {
-				log.Println("unregister", client)
-				h.leaveRoom <-client
+			// if _, ok := h.rooms[client.room]; ok {
+				// h.leaveRoom <-client
+				// log.Println("unregister", client)
+			// }
+			if room, ok := h.rooms[client.room]; ok {
+				room.playerLeave <- client
+				client.leaveRoom <- room.roomID
+				// log.Println("unregister", client)
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -79,7 +86,7 @@ func (h *Hub) run() {
 			// TODO: temporary hardcode
 			roomID := "hardcode_room01"
 			// roomID := xid.New().String()
-
+			log.Println("register room")
 			// if room was found
 			// TODO: many cases for handling
 			room, found := h.rooms[roomID] 
@@ -110,14 +117,12 @@ func (h *Hub) run() {
 						client.joinRoom <- roomID
 				}
 			
-		case client := <- h.leaveRoom:
-			joinedRoom := client.room
-			log.Println("leave room: ",client)
-
-			if room, found := h.rooms[joinedRoom]; found {
-				room.playerLeave <- client 
-				client.leaveRoom <- joinedRoom
+		case c := <- h.leaveRoom:
+			log.Println("leave room: ",c)
+			if room, ok := h.rooms[c.room]; ok {
+				room.playerLeave <- c
 			}
+			c.leaveRoom <- c.room
 
 		case clientMessage := <- h.broadcastRoom:
 			roomID := clientMessage.Client.room

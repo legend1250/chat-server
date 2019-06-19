@@ -152,11 +152,14 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			c.room = roomID
-			message := Message{Type: 2,RoomID: roomID, Message: "joined room successfully"}
-			err := c.conn.WriteJSON(message)
-			if err != nil {
-				return
+			if roomID != "" {
+				c.room = roomID
+
+				message := Message{Type: 2,RoomID: roomID, Message: "joined room successfully"}
+				err := c.conn.WriteJSON(message)
+				if err != nil {
+					return
+				}
 			}
 		
 		case roomLeaved := <-c.leaveRoom:
@@ -191,6 +194,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		joinRoom: make(chan string), 
 		leaveRoom: make(chan string),
 	}
+	log.Printf("incoming client %p", client)
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
