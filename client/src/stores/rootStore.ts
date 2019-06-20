@@ -8,6 +8,10 @@ class RootStore {
   constructor() {
     const ws = new WebSocket('ws://localhost:8080/ws')
     ws.onmessage = this.onListenMessage.bind(this)
+    ws.onclose = function(evt) {
+      console.log('connection close')
+      console.log('evt: ', evt)
+    }
     this.conn = ws
     this.loadingWS = false
   }

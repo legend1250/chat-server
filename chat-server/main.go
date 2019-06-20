@@ -29,6 +29,8 @@ func main() {
 	flag.Parse()
 	hub := newHub()
 	go hub.run()
+	go hub.run()
+	go hub.run()
 	// 
 	hub.loggingRooms()
 

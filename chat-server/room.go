@@ -1,6 +1,6 @@
 package main
 
-// import "log"
+import "log"
 
 type Room struct {
 	// 
@@ -14,6 +14,7 @@ type Room struct {
 	// Inbound messages from the clients.
 	broadcast chan Message
 
+	playerJoin chan *Client
 	playerLeave chan *Client
 
 	// close channel
@@ -39,6 +40,7 @@ func (room *Room) run(){
 		if room.player1 == nil && room.player2 == nil {
 			delete(room.hub.rooms, room.roomID)
 			close(room.broadcast)
+			close(room.playerJoin)
 			close(room.playerLeave)
 			close(room.close)
 		}
@@ -55,6 +57,24 @@ func (room *Room) run(){
 		case close := <-room.close:
 			if close {
 				break;
+			}
+
+		case client := <- room.playerJoin:
+			// if join fail -> send message type = 8
+			if room.player1 != nil && room.player2 != nil {
+				fullCapacityRoomMsg := Message{Type: 8, Message: "Room is full of capacity"}
+				client.send <- fullCapacityRoomMsg
+			} else {
+				// if join success -> send message type = 9 
+				log.Println("room available")
+				if room.player1 == nil {
+					room.player1 = client
+				} else if room.player2 == nil {
+					room.player2 = client
+				}
+				client.joinRoom <- room.roomID
+				// TODO: should boardcast msg new user has just joined to channel
+				// implementation
 			}
 		case client := <- room.playerLeave:
 			if room.player1 == client {

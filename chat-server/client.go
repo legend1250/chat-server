@@ -93,6 +93,9 @@ func (c *Client) readPump() {
 			msg := Message{Type: 6, Message: message.Message}
 			clientMessage := &ClientRoomMessage{Client: c, Message: msg}
 			c.hub.broadcastRoom <- clientMessage
+		} else if message.Type == 7 {
+			clientMessage := &ClientRoomMessage{Client: c, Message: message}
+			c.hub.joinRoom <- clientMessage
 		} else {
 			c.hub.broadcast <- message
 		}

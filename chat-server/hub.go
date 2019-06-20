@@ -7,7 +7,7 @@ package main
 import (
 	"time"
 	"log"
-	// "github.com/rs/xid"
+	"github.com/rs/xid"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -34,6 +34,8 @@ type Hub struct {
 	// Client leave room
 	leaveRoom chan *Client
 
+	joinRoom chan *ClientRoomMessage
+
 	// boardcast room
 	broadcastRoom chan *ClientRoomMessage
 }
@@ -46,8 +48,13 @@ func newHub() *Hub {
 		clients:    make(map[*Client]bool),
 		// rooms of namepsace
 		rooms: 					make(map[string]*Room),
+		// register (create) a room
 		registerRoom: 	make(chan *Client),
+		// leave / quit a room
 		leaveRoom: 			make(chan *Client),
+		// join a room with code
+		joinRoom: 			make(chan *ClientRoomMessage, 1024),
+		// broadcast entire room
 		broadcastRoom:	make(chan *ClientRoomMessage),
 	}
 }
@@ -56,10 +63,10 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
-			// log.Printf("register client %p\n", client)
+			log.Printf("register client %p\n", client)
 			h.clients[client] = true
 		case client := <-h.unregister:
-			// log.Printf("unregister client %p\n", client)
+			log.Printf("unregister client %p\n", client)
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
@@ -68,8 +75,9 @@ func (h *Hub) run() {
 			// h.leaveRoom <-client
 
 			if room, ok := h.rooms[client.room]; ok {
+				log.Printf("room pointer %p", room)
 				room.playerLeave <- client
-				client.leaveRoom <- room.roomID
+				// client.leaveRoom <- room.roomID
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -81,46 +89,44 @@ func (h *Hub) run() {
 				}
 			}
 		case client := <- h.registerRoom:
-			// TODO: temporary hardcode
-			roomID := "hardcode_room01"
-			// roomID := xid.New().String()
-			log.Println("register room")
-			// if room was found
-			// TODO: many cases for handling
-			room, found := h.rooms[roomID] 
-				if found {
-					if room.player2 == nil {
-						room.player2 = client
-					} else if room.player1 == nil {
-						room.player1 = client
-					}
-					// set room client
-					client.joinRoom <- roomID
-				} else {
-					// add player 1 first
-					newRoom := Room{
-						hub: h, 
-						roomID: roomID, 
-						player1: client,
-						player2: nil,
-						broadcast: make(chan Message), 
-						playerLeave: make(chan *Client, 2), 
-						close: make(chan bool),
-					}
-						go newRoom.run()
-						// create new room of hub
-						h.rooms[roomID] = &newRoom
-						// pass message to client
-						// set room client
-						client.joinRoom <- roomID
-				}
+			// random roomID
+			roomID := xid.New().String()
+			// create new room
+			newRoom := Room{
+				hub: h, 
+				roomID: roomID, 
+				player1: client,
+				broadcast: make(chan Message), 
+				playerJoin: make(chan *Client), 
+				playerLeave: make(chan *Client, 2), 
+				close: make(chan bool),
+			}
+			go newRoom.run()
+			// create new room of hub
+			h.rooms[roomID] = &newRoom
+			// pass message to client
+			// set room client
+			client.joinRoom <- roomID
 			
 		case c := <- h.leaveRoom:
-			log.Println("leave room: ",c)
 			if room, ok := h.rooms[c.room]; ok {
 				room.playerLeave <- c
 			}
 			c.leaveRoom <- c.room
+
+		case clientMessage := <- h.joinRoom:
+			// get roomID from sent message
+			requestRoomID := clientMessage.Message.RoomID
+			// found room in hub
+			if room, ok := h.rooms[requestRoomID]; ok {
+				if clientMessage.Client.room == "" {
+					room.playerJoin <- clientMessage.Client
+				}
+			} else{
+				// join room error code = 8
+				notFoundRoomMsg := Message{Type: 8, Message: "Room is not exist"}
+				clientMessage.Client.send <- notFoundRoomMsg
+			}
 
 		case clientMessage := <- h.broadcastRoom:
 			roomID := clientMessage.Client.room
@@ -138,10 +144,9 @@ func (h *Hub) run() {
 func (h *Hub) loggingRooms() {
 	go func(){
 		for{
-			for k := range h.rooms {
-				log.Println("roomId: ", k)
-			time.Sleep(time.Second * 1)
-
+			for k, v := range h.rooms {
+				log.Printf("roomId: %v player1 %p player2 %p", k, v.player1, v.player2)
+				time.Sleep(time.Second * 1)
 			}
 			log.Println("end of rooms")
 			time.Sleep(time.Second * 1)

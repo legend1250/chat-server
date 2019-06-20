@@ -7,6 +7,7 @@ import { withModal } from '@components'
 import { toJS } from 'mobx'
 import { FORM_ITEM_LAYOUT } from './common'
 import { FormComponentProps } from 'antd/lib/form'
+import { StoresTypes } from 'src/stores'
 
 const FormItem = Form.Item
 
@@ -65,8 +66,7 @@ const MessageArea = inject('stores')(
 const RoomJoinBtn = withModal(
   inject('stores')(
     observer(({ stores, modal }: any) => {
-      const { conn, roomInfo } = stores
-      console.log('modal: ', modal)
+      const { roomInfo } = stores
 
       const onClickJoin = () => {
         modal.show({
@@ -87,43 +87,48 @@ const RoomJoinBtn = withModal(
   )
 )
 
-const FormInputRoomCodeWrapper = Form.create()(
-  class FormInputRoomCode extends Component<FormComponentProps> {
-    onSubmitForm = (e: React.FormEvent) => {
-      e.preventDefault()
-      const { form } = this.props
-      form.validateFields(['code'], (err, values) => {
-        if (!err) {
-          console.log('values: ', values)
+const FormInputRoomCodeWrapper = inject('stores')(
+  observer(
+    Form.create()(
+      class FormInputRoomCode extends Component<{ stores: StoresTypes } & FormComponentProps> {
+        onSubmitForm = (e: React.FormEvent) => {
+          e.preventDefault()
+          const { form, stores } = this.props
+          form.validateFields(['code'], (err, values) => {
+            if (!err) {
+              console.log('values: ', values)
+              stores.conn.send(JSON.stringify({ type: 7, roomId: values.code }))
+            }
+          })
         }
-      })
-    }
 
-    render() {
-      const { form } = this.props
-      return (
-        <Form onSubmit={this.onSubmitForm}>
-          <FormItem label='code' {...FORM_ITEM_LAYOUT}>
-            {form.getFieldDecorator('code', {
-              rules: [
-                {
-                  type: 'string',
-                  required: true,
-                  whitespace: true,
-                  message: 'Code could not be empty'
-                }
-              ]
-            })(<Input />)}
-          </FormItem>
-          <FormItem>
-            <Row type='flex' justify='center'>
-              <Button htmlType='submit' type='primary'>
-                JOIN
-              </Button>
-            </Row>
-          </FormItem>
-        </Form>
-      )
-    }
-  }
+        render() {
+          const { form } = this.props
+          return (
+            <Form onSubmit={this.onSubmitForm}>
+              <FormItem label='code' {...FORM_ITEM_LAYOUT}>
+                {form.getFieldDecorator('code', {
+                  rules: [
+                    {
+                      type: 'string',
+                      required: true,
+                      whitespace: true,
+                      message: 'Code could not be empty'
+                    }
+                  ]
+                })(<Input />)}
+              </FormItem>
+              <FormItem>
+                <Row type='flex' justify='center'>
+                  <Button htmlType='submit' type='primary'>
+                    JOIN
+                  </Button>
+                </Row>
+              </FormItem>
+            </Form>
+          )
+        }
+      }
+    )
+  )
 )
