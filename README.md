@@ -1,4 +1,5 @@
 # Chat example
+[![Go Report Card](https://goreportcard.com/badge/github.com/legend1250/chat-server)](https://goreportcard.com/report/github.com/legend1250/chat-server)
 
 Source code for a tutorial: [Updating...]
 UI Repository: [chat-server-fullstack](https://github.com/legend1250/chat-server-fullstack) (ReactJS)

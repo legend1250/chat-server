@@ -5,8 +5,9 @@
 package main
 
 import (
-	"time"
 	"log"
+	"time"
+
 	"github.com/rs/xid"
 )
 
@@ -36,7 +37,7 @@ type Hub struct {
 
 	joinRoom chan *ClientRoomMessage
 
-	// boardcast room
+	// broadcast room
 	broadcastRoom chan *ClientRoomMessage
 }
 
@@ -47,15 +48,15 @@ func newHub() *Hub {
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 		// rooms of namepsace
-		rooms: 					make(map[string]*Room),
+		rooms: make(map[string]*Room),
 		// register (create) a room
-		registerRoom: 	make(chan *Client, 1024),
+		registerRoom: make(chan *Client, 1024),
 		// leave / quit a room
-		leaveRoom: 			make(chan *Client, 1024),
+		leaveRoom: make(chan *Client, 1024),
 		// join a room with code
-		joinRoom: 			make(chan *ClientRoomMessage, 1024),
+		joinRoom: make(chan *ClientRoomMessage, 1024),
 		// broadcast entire room
-		broadcastRoom:	make(chan *ClientRoomMessage, 1024),
+		broadcastRoom: make(chan *ClientRoomMessage, 1024),
 	}
 }
 
@@ -88,18 +89,18 @@ func (h *Hub) run() {
 					delete(h.clients, client)
 				}
 			}
-		case client := <- h.registerRoom:
+		case client := <-h.registerRoom:
 			// random roomID
 			roomID := xid.New().String()
 			// create new room
 			newRoom := Room{
-				hub: h, 
-				roomID: roomID, 
-				player1: client,
-				broadcast: make(chan Message, 1024), 
-				playerJoin: make(chan *Client, 2), 
-				playerLeave: make(chan *Client, 2), 
-				close: make(chan bool),
+				hub:         h,
+				roomID:      roomID,
+				player1:     client,
+				broadcast:   make(chan Message, 1024),
+				playerJoin:  make(chan *Client, 2),
+				playerLeave: make(chan *Client, 2),
+				close:       make(chan bool),
 			}
 			go newRoom.run()
 			// create new room of hub
@@ -107,14 +108,14 @@ func (h *Hub) run() {
 			// pass message to client
 			// set room client
 			client.joinRoom <- roomID
-			
-		case c := <- h.leaveRoom:
+
+		case c := <-h.leaveRoom:
 			if room, ok := h.rooms[c.room]; ok {
 				room.playerLeave <- c
 			}
 			c.leaveRoom <- c.room
 
-		case clientMessage := <- h.joinRoom:
+		case clientMessage := <-h.joinRoom:
 			// get roomID from sent message
 			requestRoomID := clientMessage.Message.RoomID
 			// found room in hub
@@ -122,13 +123,13 @@ func (h *Hub) run() {
 				if clientMessage.Client.room == "" {
 					room.playerJoin <- clientMessage.Client
 				}
-			} else{
+			} else {
 				// join room error code = 8
 				notFoundRoomMsg := Message{Type: 8, Message: "Room is not exist"}
 				clientMessage.Client.send <- notFoundRoomMsg
 			}
 
-		case clientMessage := <- h.broadcastRoom:
+		case clientMessage := <-h.broadcastRoom:
 			roomID := clientMessage.Client.room
 			message := clientMessage.Message
 			if room, found := h.rooms[roomID]; found {
@@ -142,8 +143,8 @@ func (h *Hub) run() {
 }
 
 func (h *Hub) loggingRooms() {
-	go func(){
-		for{
+	go func() {
+		for {
 			for k, v := range h.rooms {
 				log.Printf("roomId: %v player1 %p player2 %p", k, v.player1, v.player2)
 				time.Sleep(time.Second * 1)

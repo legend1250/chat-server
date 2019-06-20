@@ -3,18 +3,18 @@ package main
 import "log"
 
 type Room struct {
-	// 
+	//
 	hub *Hub
 
-	// 
-	roomID string
+	//
+	roomID  string
 	player1 *Client
 	player2 *Client
 
 	// Inbound messages from the clients.
 	broadcast chan Message
 
-	playerJoin chan *Client
+	playerJoin  chan *Client
 	playerLeave chan *Client
 
 	// close channel
@@ -22,19 +22,19 @@ type Room struct {
 }
 
 type ClientRoomMessage struct {
-	Client *Client
+	Client  *Client
 	Message Message
 }
 
-func (room *Room) run(){
-	defer func(){
+func (room *Room) run() {
+	defer func() {
 		// remove reference of hub
 		room.hub = nil
 		// cleanup player
 		room.player1 = nil
 		room.player2 = nil
 
-		// user already leave before closing room 
+		// user already leave before closing room
 		// room.player1.leaveRoom <- roomID
 		// room.player2.leaveRoom <- roomID
 
@@ -47,7 +47,7 @@ func (room *Room) run(){
 			close(room.close)
 		}
 	}()
-	for{
+	for {
 		select {
 		case message := <-room.broadcast:
 			if room.player1 != nil {
@@ -58,16 +58,16 @@ func (room *Room) run(){
 			}
 		case close := <-room.close:
 			if close {
-				break;
+				break
 			}
 
-		case client := <- room.playerJoin:
+		case client := <-room.playerJoin:
 			// if join fail -> send message type = 8
 			if room.player1 != nil && room.player2 != nil {
 				fullCapacityRoomMsg := Message{Type: 8, Message: "Room is full of capacity"}
 				client.send <- fullCapacityRoomMsg
 			} else {
-				// if join success -> send message type = 9 
+				// if join success -> send message type = 9
 				log.Println("room available")
 				if room.player1 == nil {
 					room.player1 = client
@@ -75,10 +75,10 @@ func (room *Room) run(){
 					room.player2 = client
 				}
 				client.joinRoom <- room.roomID
-				// TODO: should boardcast msg new user has just joined to channel
+				// TODO: should broadcast msg new user has just joined to channel
 				// implementation
 			}
-		case client := <- room.playerLeave:
+		case client := <-room.playerLeave:
 			if room.player1 == client {
 				room.player1 = nil
 			} else if room.player2 == client {

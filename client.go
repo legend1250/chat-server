@@ -52,8 +52,8 @@ type Client struct {
 
 	room string
 
-	// 
-	joinRoom chan string
+	//
+	joinRoom  chan string
 	leaveRoom chan string
 }
 
@@ -86,9 +86,9 @@ func (c *Client) readPump() {
 
 		// join room
 		if message.Type == 1 {
-			c.hub.registerRoom <-c
+			c.hub.registerRoom <- c
 		} else if message.Type == 3 {
-			c.hub.leaveRoom <-c
+			c.hub.leaveRoom <- c
 		} else if message.Type == 5 {
 			msg := Message{Type: 6, Message: message.Message}
 			clientMessage := &ClientRoomMessage{Client: c, Message: msg}
@@ -158,16 +158,16 @@ func (c *Client) writePump() {
 			if roomID != "" {
 				c.room = roomID
 
-				message := Message{Type: 2,RoomID: roomID, Message: "joined room successfully"}
+				message := Message{Type: 2, RoomID: roomID, Message: "joined room successfully"}
 				err := c.conn.WriteJSON(message)
 				if err != nil {
 					return
 				}
 			}
-		
+
 		case roomLeaved := <-c.leaveRoom:
 			if roomLeaved != "" {
-				message := Message{Type: 4,RoomID: roomLeaved, Message: "leave room successfully"}
+				message := Message{Type: 4, RoomID: roomLeaved, Message: "leave room successfully"}
 				c.room = ""
 				err := c.conn.WriteJSON(message)
 				if err != nil {
@@ -192,10 +192,10 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := &Client{
-		hub: hub, 
-		conn: conn, 
-		send: make(chan Message, 1024), 
-		joinRoom: make(chan string), 
+		hub:       hub,
+		conn:      conn,
+		send:      make(chan Message, 1024),
+		joinRoom:  make(chan string),
 		leaveRoom: make(chan string),
 	}
 	log.Printf("incoming client %p", client)
