@@ -168,6 +168,7 @@ func (c *Client) writePump() {
 		case roomLeaved := <-c.leaveRoom:
 			if roomLeaved != "" {
 				message := Message{Type: 4,RoomID: roomLeaved, Message: "leave room successfully"}
+				c.room = ""
 				err := c.conn.WriteJSON(message)
 				if err != nil {
 					return
@@ -193,7 +194,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		hub: hub, 
 		conn: conn, 
-		send: make(chan Message), 
+		send: make(chan Message, 1024), 
 		joinRoom: make(chan string), 
 		leaveRoom: make(chan string),
 	}
