@@ -49,13 +49,13 @@ func newHub() *Hub {
 		// rooms of namepsace
 		rooms: 					make(map[string]*Room),
 		// register (create) a room
-		registerRoom: 	make(chan *Client),
+		registerRoom: 	make(chan *Client, 1024),
 		// leave / quit a room
-		leaveRoom: 			make(chan *Client),
+		leaveRoom: 			make(chan *Client, 1024),
 		// join a room with code
 		joinRoom: 			make(chan *ClientRoomMessage, 1024),
 		// broadcast entire room
-		broadcastRoom:	make(chan *ClientRoomMessage),
+		broadcastRoom:	make(chan *ClientRoomMessage, 1024),
 	}
 }
 
@@ -96,8 +96,8 @@ func (h *Hub) run() {
 				hub: h, 
 				roomID: roomID, 
 				player1: client,
-				broadcast: make(chan Message), 
-				playerJoin: make(chan *Client), 
+				broadcast: make(chan Message, 1024), 
+				playerJoin: make(chan *Client, 2), 
 				playerLeave: make(chan *Client, 2), 
 				close: make(chan bool),
 			}
