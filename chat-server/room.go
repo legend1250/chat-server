@@ -28,6 +28,8 @@ type ClientRoomMessage struct {
 
 func (room *Room) run(){
 	defer func(){
+		// remove reference of hub
+		room.hub = nil
 		// cleanup player
 		room.player1 = nil
 		room.player2 = nil

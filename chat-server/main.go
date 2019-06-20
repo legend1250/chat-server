@@ -34,9 +34,9 @@ func main() {
 	// 
 	hub.loggingRooms()
 
-	http.HandleFunc("/", serveHome)
-	// fs := http.FileServer(http.Dir("./public"))
-	// http.Handle("/", fs)
+	// http.HandleFunc("/", serveHome)
+	fs := http.FileServer(http.Dir("./public"))
+	http.Handle("/", fs)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
