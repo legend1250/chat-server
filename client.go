@@ -89,8 +89,10 @@ func (c *Client) readPump() {
 			c.hub.registerRoom <- c
 		} else if message.Type == 3 {
 			c.hub.leaveRoom <- c
+
+			// message send to private room
 		} else if message.Type == 5 {
-			msg := Message{Type: 6, Message: message.Message}
+			msg := Message{Type: 6, RoomID: c.room, Message: message.Message}
 			clientMessage := &ClientRoomMessage{Client: c, Message: msg}
 			c.hub.broadcastRoom <- clientMessage
 		} else if message.Type == 7 {

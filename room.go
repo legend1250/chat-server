@@ -16,9 +16,6 @@ type Room struct {
 
 	playerJoin  chan *Client
 	playerLeave chan *Client
-
-	// close channel
-	close chan bool
 }
 
 type ClientRoomMessage struct {
@@ -44,7 +41,6 @@ func (room *Room) run() {
 			close(room.broadcast)
 			close(room.playerJoin)
 			close(room.playerLeave)
-			close(room.close)
 		}
 	}()
 	for {
@@ -55,10 +51,6 @@ func (room *Room) run() {
 			}
 			if room.player2 != nil {
 				room.player2.send <- message
-			}
-		case close := <-room.close:
-			if close {
-				break
 			}
 
 		case client := <-room.playerJoin:
@@ -89,7 +81,7 @@ func (room *Room) run() {
 				// remove from hub
 				delete(room.hub.rooms, room.roomID)
 				// close room itself
-				room.close <- true
+				break
 			}
 		}
 

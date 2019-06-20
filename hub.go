@@ -72,13 +72,8 @@ func (h *Hub) run() {
 				delete(h.clients, client)
 				close(client.send)
 			}
-			// this was block, how to fix???
-			// h.leaveRoom <-client
-
 			if room, ok := h.rooms[client.room]; ok {
-				log.Printf("room pointer %p", room)
 				room.playerLeave <- client
-				// client.leaveRoom <- room.roomID
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -100,7 +95,6 @@ func (h *Hub) run() {
 				broadcast:   make(chan Message, 1024),
 				playerJoin:  make(chan *Client, 2),
 				playerLeave: make(chan *Client, 2),
-				close:       make(chan bool),
 			}
 			go newRoom.run()
 			// create new room of hub
