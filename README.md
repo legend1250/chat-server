@@ -1,15 +1,11 @@
 # Chat example
 
 Source code for a tutorial: [Updating...]
+UI Repository: [chat-server-fullstack](https://github.com/legend1250/chat-server-fullstack) (ReactJS)
 
 ## Run Locally
 
-- Server
-  - cd `chat-server`
-  - `realize start`
-- UI
-  - cd `client`
-  - `yarn start`
+- `realize start`
 
 ## Contributing
 
