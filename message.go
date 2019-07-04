@@ -6,4 +6,5 @@ type Message struct {
 	Type    int    `json:"type"`
 	RoomID  string `json:"roomId"`
 	Message string `json:"message"`
+	Point   string `json:"point"`
 }

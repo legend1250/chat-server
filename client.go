@@ -98,6 +98,16 @@ func (c *Client) readPump() {
 		} else if message.Type == 7 {
 			clientMessage := &ClientRoomMessage{Client: c, Message: message}
 			c.hub.joinRoom <- clientMessage
+		} else if message.Type == 9 {
+			// if user haven't joined any room -> quick join
+			if c.room == "" {
+				clientMessage := &ClientRoomMessage{Client: c, Message: message}
+				c.hub.joinRoomQuickly <- clientMessage
+			} else {
+				msg := Message{Type: 10, Message: "you are not available for room"}
+				c.send <- msg
+			}
+
 		} else {
 			c.hub.broadcast <- message
 		}

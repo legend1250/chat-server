@@ -35,7 +35,14 @@ type Hub struct {
 	// Client leave room
 	leaveRoom chan *Client
 
+	// Client join a room with code
 	joinRoom chan *ClientRoomMessage
+
+	// Client join a room quickly
+	joinRoomQuickly chan *ClientRoomMessage
+
+	// Client move next
+	movePlayer chan *ClientRoomMessage
 
 	// broadcast room
 	broadcastRoom chan *ClientRoomMessage
@@ -47,7 +54,7 @@ func newHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
-		// rooms of namepsace
+		// rooms of namespace
 		rooms: make(map[string]*Room),
 		// register (create) a room
 		registerRoom: make(chan *Client, 1024),
@@ -55,6 +62,12 @@ func newHub() *Hub {
 		leaveRoom: make(chan *Client, 1024),
 		// join a room with code
 		joinRoom: make(chan *ClientRoomMessage, 1024),
+		// join a room quickly
+		joinRoomQuickly: make(chan *ClientRoomMessage, 1024),
+
+		// player move next
+		movePlayer: make(chan *ClientRoomMessage, 1024),
+
 		// broadcast entire room
 		broadcastRoom: make(chan *ClientRoomMessage, 1024),
 	}
@@ -124,15 +137,56 @@ func (h *Hub) run() {
 			}
 
 		case clientMessage := <-h.broadcastRoom:
-			roomID := clientMessage.Client.room
-			message := clientMessage.Message
-			if room, found := h.rooms[roomID]; found {
-				if room.player1 == clientMessage.Client || room.player2 == clientMessage.Client {
-					room.broadcast <- message
+			c := clientMessage.Client
+			if valid, room := h.isClientBelongToRoom(c); valid {
+				room.broadcast <- clientMessage.Message
+			}
+
+		case clientMessage := <-h.joinRoomQuickly:
+			c := clientMessage.Client
+			// TODO: check whether client will join multiple of rooms
+			findRoomChannel := make(chan string)
+			go func() {
+				var isFound bool = false
+				var roomID string
+				for _, room := range h.rooms {
+					//if room.player1 != nil && room.player2 == nil {
+					//	c.room = id
+					//	room.player2 = c
+					//} else if room.player1 == nil && room.player2 != nil {
+					//	c.room = id
+					//	room.player1 = c
+					//} else {
+					//	msg := Message{Type: 10, Message: "No rooms are available for now"}
+					//	c.send <- msg
+					//}
+					if !isFound {
+						if (room.player1 != nil && room.player2 == nil) || (room.player1 == nil && room.player2 != nil) {
+							// room.playerJoin <- c
+							roomID = room.roomID
+							isFound = true
+							break
+						}
+					}
 				}
+				if isFound {
+					findRoomChannel <- roomID
+				} else {
+					findRoomChannel <- ""
+				}
+			}()
+			// receiver round found
+			roomIDFound := <-findRoomChannel
+			close(findRoomChannel)
+			// send player to room
+			if roomIDFound != "" {
+				h.rooms[roomIDFound].playerJoin <- c
+			} else {
+				// send message to room
+				message := Message{Type: 10, Message: "There is no room available"}
+				c.send <- message
 			}
 		}
-
 	}
 }
 
@@ -147,4 +201,16 @@ func (h *Hub) loggingRooms() {
 			time.Sleep(time.Second * 1)
 		}
 	}()
+}
+
+func (h *Hub) isClientBelongToRoom(c *Client) (valid bool, room *Room) {
+	roomID := c.room
+	if room, found := h.rooms[roomID]; found {
+		if room.player1 == c || room.player2 == c {
+			return true, room
+		}
+		return false, nil
+	}
+
+	return false, nil
 }

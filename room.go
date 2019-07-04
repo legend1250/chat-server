@@ -16,6 +16,8 @@ type Room struct {
 
 	playerJoin  chan *Client
 	playerLeave chan *Client
+
+	game *Game
 }
 
 type ClientRoomMessage struct {
@@ -59,7 +61,7 @@ func (room *Room) run() {
 				fullCapacityRoomMsg := Message{Type: 8, Message: "Room is full of capacity"}
 				client.send <- fullCapacityRoomMsg
 			} else {
-				// if join success -> send message type = 9
+				// if join success -> send message type = ??
 				log.Println("room available")
 				if room.player1 == nil {
 					room.player1 = client
